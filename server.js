@@ -41,13 +41,12 @@ const server = http.createServer(async (req, res) => {
     const raw = u.searchParams.get('url')||''; const q = u.searchParams.get('q')||'720'; const audio = u.searchParams.get('audio')==='1';
     if(!/^https?:\/\//i.test(raw) || /(localhost|127\.0\.0\.1)/.test(raw)) { res.writeHead(400); return res.end('bad url'); }
     const { spawn } = require('child_process');
-    const fmt = audio ? 'bestaudio' : (q<='360' ? '18/best[height<='+q+']/best' : 'best[height<='+q+'][ext=mp4]/best[height<='+q+']/best');
+    const fmt = audio ? 'bestaudio[ext=m4a]/bestaudio' : (q<='360' ? '18/best[height<='+q+']/best' : 'best[height<='+q+'][ext=mp4]/best[height<='+q+']/best');
     const args = ['--no-playlist','--no-warnings','--js-runtimes','node','-f',fmt,'-o','-'];
-    if (audio) args.push('-x','--audio-format','mp3');
     args.push(raw);
     const p = spawn('yt-dlp', args, {stdio:['ignore','pipe','pipe']});
     let err=''; p.stderr.on('data',d=>err+=d);
-    res.writeHead(200, {'Content-Type': audio?'audio/mpeg':'video/mp4', 'Content-Disposition':'attachment; filename="socialgrabber-download.'+(audio?'mp3':'mp4')+'"'});
+    res.writeHead(200, {'Content-Type': audio?'audio/mp4':'video/mp4', 'Content-Disposition':'attachment; filename="socialgrabber-download.'+(audio?'mp3':'mp4')+'"'});
     p.stdout.pipe(res);
     p.on('error', ()=>{ try{res.end();}catch{} });
     req.on('close', ()=>{ try{p.kill('SIGKILL');}catch{} });

@@ -1,1 +1,8 @@
-{"name":"socialgrabber","version":"1.0.0","private":true,"scripts":{"start":"node server.js"}}
+{
+  "name": "socialgrabber",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "bash start.sh"
+  }
+}
