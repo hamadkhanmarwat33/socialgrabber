@@ -3,11 +3,13 @@ const fs = require('fs');
 const path = require('path');
 const PUB = path.join(__dirname, 'public');
 const MIME = {'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.txt':'text/plain','.xml':'application/xml'};
-function json(res, code, obj){ res.writeHead(code, {'Content-Type':'application/json'}); res.end(JSON.stringify(obj)); }
+const CORS = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'};
+function json(res, code, obj){ res.writeHead(code, {'Content-Type':'application/json', ...CORS}); res.end(JSON.stringify(obj)); }
 const OEMBED={'youtube.com':'https://www.youtube.com/oembed','youtu.be':'https://www.youtube.com/oembed','vimeo.com':'https://vimeo.com/api/oembed.json','tiktok.com':'https://www.tiktok.com/oembed','x.com':'https://publish.twitter.com/oembed','twitter.com':'https://publish.twitter.com/oembed','dailymotion.com':'https://www.dailymotion.com/services/oembed','reddit.com':'https://www.reddit.com/oembed','tumblr.com':'https://www.tumblr.com/oembed/1.0','rumble.com':'https://rumble.com/api/Media/oembed.json'};
 const INSTANCES = ["https://api.cobalt.liubquanti.click/"];
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, 'http://x');
+  if (req.method === 'OPTIONS') { res.writeHead(204, CORS); return res.end(); }
   if (u.pathname === '/api/health') return json(res, 200, {ok:true, service:'SocialGrabber', time:new Date().toISOString()});
   if (u.pathname === '/api/oembed') {
     const raw = u.searchParams.get('url')||''; let t; try{ t=new URL(raw); }catch{ return json(res,400,{error:'Invalid URL'}); }
@@ -31,7 +33,7 @@ const server = http.createServer(async (req, res) => {
           if(data){ lastErr=(data.error&&data.error.code)||'error'; if(!String(lastErr).includes('auth')) return json(res,200,data); }
         }catch(e){ lastErr='network.unreachable'; }
       }
-      if (/youtube\.com|youtu\.be/.test(url)) return json(res,200,{status:'redirect', url:'/api/ytdl?url='+encodeURIComponent(url)+'&q='+encodeURIComponent(payload.videoQuality)+(payload.downloadMode==='audio'?'&audio=1':''), filename:'socialgrabber-download.'+(payload.downloadMode==='audio'?'mp3':'mp4')});
+      if (/youtube\.com|youtu\.be/.test(url)) return json(res,200,{status:'redirect', url:'https://'+(req.headers.host||'socialgrabber-f5b44.containers.snapdeploy.app')+'/api/ytdl?url='+encodeURIComponent(url)+'&q='+encodeURIComponent(payload.videoQuality)+(payload.downloadMode==='audio'?'&audio=1':''), filename:'socialgrabber-download.'+(payload.downloadMode==='audio'?'mp3':'mp4')});
       return json(res,502,{status:'error',error:{code:lastErr}});
     });
     return;
